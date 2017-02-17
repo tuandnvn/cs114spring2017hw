@@ -1,0 +1,282 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "from IPython.display import display, Math, Latex"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Alice and Bob participate in a game. There is a pool table behind a curtain. There is another friend named Carol can play on the table."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Carol rolls a ball down the table, and mark the point where the ball landed."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Carol continuously rolls more balls down the table, if the ball runs to the right of the mark, give Alice 1 point, otherwise give Bob 1 point."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "After 8 turns, Alice got 5, Bob got 3, and who get 6 points win."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "What is the probability of Bob winning the game?\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let's call p the probabilitiy of Bob win a round. It should be fixed at the time Carol marks the anchor point. \n",
+    "Let's call D the observed state (D = Alice (5 point), Bob (3 point))\n",
+    "Let's call B the event when Bob wins the game.\n",
+    "\n",
+    "**Naive frequentist approach**\n",
+    "\n",
+    "Based on MLE, we estimate p based on the following likelihood:\n",
+    "\n",
+    "$P(D|p) = p^5 * ( 1 - p )^3$\n",
+    "\n",
+    "Maximize this give: \n",
+    "\n",
+    "$p = 3 / 8$\n",
+    "\n",
+    "Now we use this value of p to estimate the probability of Bob winning the game, which only happens if Bob wins 3 more rounds while Alice still has 5 points only:\n",
+    "\n",
+    "$P(B|D) = p^3$  (1)\n",
+    "\n",
+    "Do the calculation:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.052734375"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "3.0 ** 3 / 8.0 ** 3"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "** Bayesian approach **\n",
+    "\n",
+    "Bayesian says that based on current observation, we have some uncertainty on the model parameter p, and will quantify that by the following posterior:\n",
+    "\n",
+    "$P(p|D)$\n",
+    "\n",
+    "while the prior of p (uncertainty of p when we haven't observed anything) is as following:\n",
+    "\n",
+    "$P(p)$\n",
+    "\n",
+    "Now remember the marginalization method:\n",
+    "\n",
+    "$P(X) = \\sum {P(X, Y)}$\n",
+    "\n",
+    "It has a continuous form:\n",
+    "\n",
+    "$P(X) = \\int P(X, Y) dY$\n",
+    "\n",
+    "Also it could be stated in a conditional form as well:\n",
+    "\n",
+    "$P(X | Z) = \\int P(X, Y | Z) dY$\n",
+    "\n",
+    "Applying that, we calculate the chance that Bob winning the game, again by:\n",
+    "\n",
+    "$P(B|D) = \\int P(B, p|D) dp $\n",
+    "\n",
+    "$       = \\int P(B|p, D) * P(p|D) dp  $  based on conditionally Bayes rule \n",
+    "\n",
+    "Note that the formula inside the integral is exactly the calculation at (1) but with only one value of p = 3/8. Here instead we have a distribution of P(p|D). \n",
+    "\n",
+    "Replace $P(B|p, D) = p^3$ and apply Bayes rule for $P(p|D)$ give:\n",
+    "\n",
+    "$       = \\int p^3 * \\frac{P(D|p) * P(p)}{P(D)}  dp  $ \n",
+    "\n",
+    "Note that $P(D|p) = p^3 * (1 - p)^5$ and assume uniform distribution of p at beginning $P(p)$, and also move $P(D)$ out of integral give:\n",
+    "\n",
+    "$       = \\frac{\\int p^3 * p^3 * (1 - p)^5  dp}{P(D)}  $\n",
+    "\n",
+    "The numerator would become:\n",
+    "\n",
+    "$\\int p^6* (1 - p)^5 dp $ \n",
+    "\n",
+    "\n",
+    "\n",
+    "Now similarly for the denominator, do the integration as well:\n",
+    "\n",
+    "$P(D) = \\int P(D|p) * P(p) dp $ \n",
+    "\n",
+    "$ = \\int p^3 * (1 - p)^5 dp $ \n",
+    "\n",
+    "Do the calculation:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.0909090909091\n"
+     ]
+    }
+   ],
+   "source": [
+    "import scipy.integrate as integrate\n",
+    "\n",
+    "enumerator = integrate.quad ( lambda p : p ** 6 * ( 1 - p ) ** 5, 0, 1 ) [0]\n",
+    "\n",
+    "denominator = integrate.quad ( lambda p : p ** 3 * ( 1 - p ) ** 5, 0, 1 ) [0]\n",
+    "\n",
+    "result = enumerator / denominator\n",
+    "\n",
+    "print result"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**What is the difference in this problem**\n",
+    "\n",
+    "Consider $P(p|D)$, basically the first approach gives a discrete probability $P(3/8) = 1$ (it could be thought of as a continuous distribution that has pdf (probability density function) = $\\infty$ at 3/8 and 0 otherwise) while the second approach gives the following distribution of $P(p|D)$:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<matplotlib.collections.LineCollection at 0x103a3e250>"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "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\nAABJRU5ErkJggg==\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x105dfa1d0>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "%matplotlib inline\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "import numpy as np\n",
+    "\n",
+    "step = 0.0001\n",
+    "xs = np.arange(0, 1, step)\n",
+    "\n",
+    "ys = np.power(xs,3) * np.power(1 - xs, 5) / denominator\n",
+    "\n",
+    "plt.plot(xs, ys)\n",
+    "\n",
+    "best = 3.0 / 8\n",
+    "plt.text( best, 0, str(best) )\n",
+    "plt.vlines(best, 0, ys[best/step], linestyles=u'dashed')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The distribution also peaks at 3/8"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Extra credit problem:\n",
+    "    \n",
+    "Imagine the pool behinds the curtain has infinity dimension so that the ball can go straight without bouncing on the edges. We know that the direction Carol rolls the ball is of uniform distribution. Whether and how would we incorporate that knowledge into our calculation? If we incorporate it, can you use Bayesian approach to calculate what is the probability of Bob winning the game?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.10"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
