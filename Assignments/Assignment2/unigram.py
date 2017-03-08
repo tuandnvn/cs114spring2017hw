@@ -42,7 +42,7 @@ class Unigram (LanguageModel):
     def getVocabulary(self):
         return self.probCounter.keys()
 
-    def generateWord(self):
+    def generateWord(self, prev_word):
         i = self.rand.randint(0, self.total - 1)
         index = bisect.bisect_left( self.accu, i )
         return self.probCounter.keys()[index]
